@@ -69,18 +69,18 @@ export default function StartPage() {
               </div>
             </button>
 
-            {/* Solo Button with hover effect */}
+            {/* 1v1 Button with hover effect */}
             <button
-              onClick={() => router.push("/solo")}
+              onClick={() => router.push("/1v1")}
               className="w-48 h-48 bg-white/90 rounded-xl shadow-lg hover:scale-105 transition-transform duration-300 relative group overflow-hidden"
             >
               <span className="absolute inset-0 flex items-center justify-center text-lg z-10 bg-white/90 transition-opacity duration-300 group-hover:opacity-0">
-                Solo
+                1v1 Duel
               </span>
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <Image
-                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/DALL%C2%B7E%202025-02-07%2010.17.54%20-%20A%20cartoonish%20illustration%20of%20a%20person%20standing%20before%20a%20large,%20looming%20blackboard%20filled%20with%20complex%20physics%20and%20math%20formulas.%20The%20person%20appears%20sm-Ur88ROVv8UPRLW1pU3FENoOmDWd51f.webp"
-                  alt="Solo Practice"
+                  src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/DALL%C2%B7E%202025-02-07%2010.21.06%20-%20A%20cartoonish%20illustration%20of%20two%20people%20sparring%20using%20chalk%20as%20their%20weapons%20in%20front%20of%20a%20giant%20blackboard%20filled%20with%20math%20and%20physics%20equations.%20T-5HoWZI4E9yoYrZeT106c5WDub1j0NH.webp"
+                  alt="1v1 Duel"
                   fill
                   className="object-cover"
                   sizes="192px"
