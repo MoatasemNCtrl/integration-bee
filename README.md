@@ -4,7 +4,15 @@ A web application that turns integration problems into an engaging game, similar
 
 ## ✨ Features
 
-- **🎮 Multiple Game Modes**: 3-minute, 5-minute, and unlimited time modes
+### 🎮 Game Modes
+- **🚀 Integral Rush**: Timed problem-solving challenges (3, 5 minutes, or unlimited)
+- **⚔️ 1v1 Duel**: Head-to-head competitive gameplay
+- **🏆 Tournament Mode**: 
+  - Round Robin (Kahoot-style simultaneous play)
+  - Knockout (Elimination bracket)
+- **🏆 League Mode**: Fantasy Premier League style competition with persistent rankings
+
+### 🎯 Core Features
 - **📝 Drawing Canvas**: Solve problems by hand using the interactive drawing board
 - **🤖 AI Validation**: Solutions are checked using OpenAI's GPT-4 Vision API
 - **📊 Progress Tracking**: Detailed statistics and performance analytics
@@ -12,6 +20,15 @@ A web application that turns integration problems into an engaging game, similar
 - **💡 Hint System**: Get helpful hints when you're stuck
 - **📚 Practice Mode**: Study problems at your own pace with solutions
 - **🔥 Streak System**: Build up solving streaks for extra motivation
+
+### 🏆 League System (Fantasy Premier League Style)
+- **📈 Global Leaderboard**: Compete with players worldwide
+- **🏅 Division System**: Premier, Championship, League One, League Two
+- **⭐ Point Scoring**: Earn points based on problem difficulty and accuracy
+- **📊 Weekly Rankings**: Track weekly performance and trends
+- **🏆 Achievements**: Unlock badges and milestones
+- **👤 Player Profiles**: Detailed statistics and progress tracking
+- **📅 Persistent Competition**: Long-term point accumulation and ranking
 
 ## 🚀 Getting Started
 
@@ -58,29 +75,48 @@ A web application that turns integration problems into an engaging game, similar
 
 ## 🎯 How to Play
 
-1. **Choose a Game Mode**: Select from 3-minute, 5-minute, or unlimited time
+### 🚀 Integral Rush
+1. **Choose Time Mode**: Select from 3-minute, 5-minute, or unlimited time
 2. **Solve the Integral**: Use the drawing canvas to write your solution by hand
 3. **Submit Your Answer**: Click submit to have AI validate your solution
-4. **Progress Through Difficulties**: Start with basic problems and advance to intermediate and advanced levels
-5. **Build Your Streak**: Solve consecutive problems correctly to build your streak
-6. **Track Your Progress**: View detailed statistics on your performance
+4. **Build Your Streak**: Solve consecutive problems correctly to maximize points
 
-## 🧮 Problem Types
+### ⚔️ 1v1 Duel
+1. **Enter Duel Lobby**: Set up a head-to-head match
+2. **Race to Solve**: Compete against another player in real-time
+3. **First to Complete**: Win by solving more problems correctly within the time limit
 
-### Basic Level
-- Power rule integrals
-- Simple exponential and trigonometric functions
-- Basic logarithmic integrals
+### 🏆 Tournament Mode
+1. **Choose Format**: Select Round Robin or Knockout
+2. **Join Lobby**: Wait for other players to join
+3. **Compete**: Battle through tournament brackets or simultaneous challenges
 
-### Intermediate Level
-- Integration by parts
-- Trigonometric integrals
-- Substitution method problems
+### 🏆 League Mode
+1. **Solve Problems**: Earn points based on difficulty (Basic: 10pts, Intermediate: 25pts, Advanced: 50pts)
+2. **Climb Rankings**: Move up the global leaderboard
+3. **Advance Divisions**: Progress from League Two → League One → Championship → Premier League
+4. **Weekly Competition**: Compete in weekly rankings for bonus recognition
+5. **Unlock Achievements**: Earn badges for milestones and special accomplishments
 
-### Advanced Level
+## 🧮 Problem Types & Scoring
+
+### Basic Level (10 points)
+- Power rule integrals: `∫x^n dx`
+- Simple exponential: `∫e^x dx`
+- Basic trigonometric: `∫sin(x) dx`, `∫cos(x) dx`
+- Simple logarithmic: `∫1/x dx`
+
+### Intermediate Level (25 points)
+- Integration by parts: `∫x*e^x dx`
+- Trigonometric integrals: `∫sin²(x) dx`
+- Basic substitution: `∫2x*e^(x²) dx`
+- Rational functions: `∫1/(x²+1) dx`
+
+### Advanced Level (50 points)
 - Multiple integration by parts
 - Complex trigonometric identities
 - Advanced substitution techniques
+- Partial fractions
 
 ## 🎨 Drawing Features
 
@@ -89,13 +125,29 @@ A web application that turns integration problems into an engaging game, similar
 - **Clear Canvas**: Start over completely
 - **Responsive Canvas**: Works on desktop and tablet devices
 
-## 📊 Statistics Tracking
+## 📊 Statistics & Progression
 
+### Individual Stats
 - Total problems attempted and solved
 - Accuracy rate by difficulty level
 - Best streak records
-- Session history
-- Performance trends
+- Session history and performance trends
+- Average solving time
+
+### League Stats
+- Global ranking and division standing
+- Total league points accumulated
+- Weekly performance tracking
+- Achievement progress
+- Head-to-head match history
+
+### Achievements System
+- 🎯 **First Steps**: Solve your first integral
+- 🔥 **Hot Streak**: Solve 10 problems in a row correctly
+- ⚡ **Unstoppable**: Solve 25 problems in a row correctly
+- 💨 **Speed Demon**: Solve a problem in under 15 seconds
+- 💎 **Perfectionist**: Maintain 95% accuracy over 50 problems
+- 💯 **Century Club**: Solve 100 problems
 
 ## 🔧 Technical Stack
 
