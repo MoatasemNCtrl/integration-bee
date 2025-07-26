@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -43,13 +44,14 @@ interface Problem {
 
 export default function LeagueSolvePage() {
   const router = useRouter()
+  const { data: authSession, status } = useSession()
   const [currentProblem, setCurrentProblem] = useState<Problem | null>(null)
   const [userAnswer, setUserAnswer] = useState("")
   const [showResult, setShowResult] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
   const [showHint, setShowHint] = useState(false)
   const [timeLeft, setTimeLeft] = useState(180) // 3 minutes per problem
-  const [session, setSession] = useState<LeagueSession>({
+  const [gameSession, setGameSession] = useState<LeagueSession>({
     problemsSolved: 0,
     pointsEarned: 0,
     streak: 0,
@@ -58,6 +60,13 @@ export default function LeagueSolvePage() {
     difficulty: "Basic"
   })
   const [isValidating, setIsValidating] = useState(false)
+
+  // Redirect to sign in if not authenticated
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/signin")
+    }
+  }, [status, router])
 
   const difficultyPoints = {
     "Basic": 10,
@@ -74,8 +83,8 @@ export default function LeagueSolvePage() {
   // Generate new problem
   const generateProblem = () => {
     const difficulty: "Basic" | "Intermediate" | "Advanced" = 
-      session.problemsSolved < 5 ? "Basic" : 
-      session.problemsSolved < 15 ? "Intermediate" : "Advanced"
+      gameSession.problemsSolved < 5 ? "Basic" : 
+      gameSession.problemsSolved < 15 ? "Intermediate" : "Advanced"
     
     const baseProblem = getRandomProblem(difficulty)
     
@@ -131,7 +140,7 @@ export default function LeagueSolvePage() {
       setShowResult(true)
       
       // Update session stats
-      setSession(prev => {
+      setGameSession(prev => {
         const newSolved = prev.problemsSolved + 1
         const newPointsEarned = correct ? prev.pointsEarned + currentProblem.points : prev.pointsEarned
         const newStreak = correct ? prev.streak + 1 : 0
@@ -197,6 +206,22 @@ export default function LeagueSolvePage() {
     return ""
   }
 
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!authSession) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+        <div className="text-white text-xl">Please sign in to access League mode</div>
+      </div>
+    )
+  }
+
   if (!currentProblem) {
     return <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
       <div className="text-white text-xl">Loading...</div>
@@ -239,14 +264,14 @@ export default function LeagueSolvePage() {
           <Card className="bg-black/20 border-gray-700">
             <CardContent className="p-4 text-center">
               <p className="text-sm text-gray-400">Problems</p>
-              <p className="text-2xl font-bold text-white">{session.problemsSolved}</p>
+              <p className="text-2xl font-bold text-white">{gameSession.problemsSolved}</p>
             </CardContent>
           </Card>
           
           <Card className="bg-black/20 border-gray-700">
             <CardContent className="p-4 text-center">
               <p className="text-sm text-gray-400">Points</p>
-              <p className="text-2xl font-bold text-green-400">{session.pointsEarned}</p>
+              <p className="text-2xl font-bold text-green-400">{gameSession.pointsEarned}</p>
             </CardContent>
           </Card>
           
@@ -254,7 +279,7 @@ export default function LeagueSolvePage() {
             <CardContent className="p-4 text-center">
               <p className="text-sm text-gray-400">Streak</p>
               <p className="text-2xl font-bold text-orange-400">
-                {session.streak} {getStreakEmoji(session.streak)}
+                {gameSession.streak} {getStreakEmoji(gameSession.streak)}
               </p>
             </CardContent>
           </Card>
@@ -262,15 +287,15 @@ export default function LeagueSolvePage() {
           <Card className="bg-black/20 border-gray-700">
             <CardContent className="p-4 text-center">
               <p className="text-sm text-gray-400">Accuracy</p>
-              <p className="text-2xl font-bold text-blue-400">{session.accuracy.toFixed(1)}%</p>
+              <p className="text-2xl font-bold text-blue-400">{gameSession.accuracy.toFixed(1)}%</p>
             </CardContent>
           </Card>
           
           <Card className="bg-black/20 border-gray-700">
             <CardContent className="p-4 text-center">
               <p className="text-sm text-gray-400">Difficulty</p>
-              <Badge className={`${difficultyColors[session.difficulty]} text-white`}>
-                {session.difficulty}
+              <Badge className={`${difficultyColors[gameSession.difficulty]} text-white`}>
+                {gameSession.difficulty}
               </Badge>
             </CardContent>
           </Card>
@@ -282,7 +307,7 @@ export default function LeagueSolvePage() {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Target className="h-6 w-6 text-purple-400" />
-                Problem #{session.problemsSolved + 1}
+                Problem #{gameSession.problemsSolved + 1}
               </CardTitle>
               <div className="flex items-center gap-2">
                 <Badge className={`${difficultyColors[currentProblem.difficulty]} text-white`}>
@@ -368,8 +393,8 @@ export default function LeagueSolvePage() {
                         {isCorrect ? (
                           <>
                             <strong>Correct!</strong> You earned {currentProblem.points} points! 
-                            {session.streak > 0 && (
-                              <span> 🔥 {session.streak} problem streak!</span>
+                            {gameSession.streak > 0 && (
+                              <span> 🔥 {gameSession.streak} problem streak!</span>
                             )}
                           </>
                         ) : (
@@ -399,14 +424,14 @@ export default function LeagueSolvePage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-400">Session Progress</span>
-              <span className="text-sm text-gray-400">{session.problemsSolved} problems solved</span>
+              <span className="text-sm text-gray-400">{gameSession.problemsSolved} problems solved</span>
             </div>
-            <Progress value={(session.problemsSolved % 10) * 10} className="h-2" />
+            <Progress value={(gameSession.problemsSolved % 10) * 10} className="h-2" />
             <div className="flex justify-between items-center mt-2">
               <p className="text-xs text-gray-500">
                 Complete 10 problems to earn a bonus multiplier!
               </p>
-              {session.problemsSolved >= 10 && (
+              {gameSession.problemsSolved >= 10 && (
                 <Button
                   onClick={() => router.push("/league/results")}
                   variant="outline"

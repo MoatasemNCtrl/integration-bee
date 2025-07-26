@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import Background from "./components/background"
+import { UserNav } from "@/components/user-nav"
 import Image from "next/image"
 
 export default function StartPage() {
@@ -17,6 +18,11 @@ export default function StartPage() {
     <div className="relative w-full h-screen bg-white overflow-hidden">
       {/* Background Animation */}
       <Background />
+
+      {/* User Navigation - Top Right */}
+      <div className="absolute top-4 right-4 z-20">
+        <UserNav />
+      </div>
 
       {/* Content Layer */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">

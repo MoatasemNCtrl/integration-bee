@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-
-// Mock database - in a real app, this would connect to a proper database
-let leaderboard = [
-  { id: "1", name: "MathWhiz", points: 2847, rank: 1, streak: 12, accuracy: 94.2, problemsSolved: 156, weeklyPoints: 127, trend: "up", division: "Premier" },
-  { id: "2", name: "IntegralKing", points: 2734, rank: 2, streak: 8, accuracy: 91.7, problemsSolved: 143, weeklyPoints: 98, trend: "up", division: "Premier" },
-  { id: "3", name: "CalculusGuru", points: 2689, rank: 3, streak: 15, accuracy: 93.1, problemsSolved: 138, weeklyPoints: 112, trend: "same", division: "Premier" },
-  { id: "4", name: "DerivativeAce", points: 2598, rank: 4, streak: 6, accuracy: 89.4, problemsSolved: 134, weeklyPoints: 89, trend: "down", division: "Premier" },
-  { id: "5", name: "You", points: 2456, rank: 5, streak: 9, accuracy: 87.3, problemsSolved: 128, weeklyPoints: 76, trend: "up", division: "Premier" },
-  { id: "6", name: "LimitLegend", points: 2398, rank: 6, streak: 4, accuracy: 86.8, problemsSolved: 125, weeklyPoints: 82, trend: "down", division: "Premier" },
-  { id: "7", name: "SeriesSolver", points: 2342, rank: 7, streak: 11, accuracy: 88.9, problemsSolved: 119, weeklyPoints: 94, trend: "up", division: "Premier" },
-  { id: "8", name: "FunctionFan", points: 2289, rank: 8, streak: 3, accuracy: 85.2, problemsSolved: 117, weeklyPoints: 67, trend: "same", division: "Premier" },
-]
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
 
 // GET /api/league - Get leaderboard data
 export async function GET(request: NextRequest) {
@@ -19,18 +10,55 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type') || 'global'
     
     if (type === 'weekly') {
-      // Sort by weekly points for weekly rankings
-      const weeklyLeaderboard = [...leaderboard].sort((a, b) => b.weeklyPoints - a.weeklyPoints)
+      // Get weekly leaderboard sorted by weekly points
+      const users = await prisma.user.findMany({
+        orderBy: { weeklyPoints: 'desc' },
+        take: 50,
+        select: {
+          id: true,
+          name: true,
+          leaguePoints: true,
+          weeklyPoints: true,
+          currentStreak: true,
+          totalProblems: true,
+          correctSolved: true,
+          division: true
+        }
+      })
+      
+      const leaderboard = users.map((user, index) => ({
+        id: user.id,
+        name: user.name || "Anonymous",
+        points: user.leaguePoints,
+        rank: index + 1,
+        streak: user.currentStreak,
+        accuracy: user.totalProblems > 0 ? (user.correctSolved / user.totalProblems) * 100 : 0,
+        problemsSolved: user.totalProblems,
+        weeklyPoints: user.weeklyPoints,
+        trend: "same", // We'd need historical data to calculate this
+        division: user.division
+      }))
+      
       return NextResponse.json({
         success: true,
-        leaderboard: weeklyLeaderboard,
+        leaderboard,
         type: 'weekly'
       })
     }
     
     if (type === 'user') {
-      const userId = searchParams.get('userId') || '5'
-      const user = leaderboard.find(player => player.id === userId)
+      const session = await getServerSession(authOptions)
+      
+      if (!session?.user?.id) {
+        return NextResponse.json({
+          success: false,
+          error: 'Not authenticated'
+        }, { status: 401 })
+      }
+      
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id }
+      })
       
       if (!user) {
         return NextResponse.json({
@@ -39,21 +67,85 @@ export async function GET(request: NextRequest) {
         }, { status: 404 })
       }
       
+      // Calculate global rank
+      const higherRankedCount = await prisma.user.count({
+        where: {
+          leaguePoints: {
+            gt: user.leaguePoints
+          }
+        }
+      })
+      
+      const globalRank = higherRankedCount + 1
+      
+      // Calculate weekly rank
+      const higherWeeklyRankedCount = await prisma.user.count({
+        where: {
+          weeklyPoints: {
+            gt: user.weeklyPoints
+          }
+        }
+      })
+      
+      const weeklyRank = higherWeeklyRankedCount + 1
+      
+      const totalUsers = await prisma.user.count()
+      
       return NextResponse.json({
         success: true,
-        user,
+        user: {
+          id: user.id,
+          name: user.name,
+          points: user.leaguePoints,
+          rank: globalRank,
+          streak: user.currentStreak,
+          accuracy: user.totalProblems > 0 ? (user.correctSolved / user.totalProblems) * 100 : 0,
+          problemsSolved: user.totalProblems,
+          weeklyPoints: user.weeklyPoints,
+          division: user.division
+        },
         stats: {
-          totalPlayers: 2847,
-          yourRank: user.rank,
-          yourPoints: user.points,
-          weeklyRank: leaderboard.sort((a, b) => b.weeklyPoints - a.weeklyPoints).findIndex(p => p.id === userId) + 1,
-          division: "Premier League",
-          nextRelegation: 2200
+          totalPlayers: totalUsers,
+          yourRank: globalRank,
+          yourPoints: user.leaguePoints,
+          weeklyRank: weeklyRank,
+          division: user.division,
+          nextRelegation: user.division === "Premier" ? 2200 : 
+                         user.division === "Championship" ? 1600 :
+                         user.division === "League One" ? 1000 : null
         }
       })
     }
     
     // Default: global leaderboard
+    const users = await prisma.user.findMany({
+      orderBy: { leaguePoints: 'desc' },
+      take: 50,
+      select: {
+        id: true,
+        name: true,
+        leaguePoints: true,
+        weeklyPoints: true,
+        currentStreak: true,
+        totalProblems: true,
+        correctSolved: true,
+        division: true
+      }
+    })
+    
+    const leaderboard = users.map((user, index) => ({
+      id: user.id,
+      name: user.name || "Anonymous",
+      points: user.leaguePoints,
+      rank: index + 1,
+      streak: user.currentStreak,
+      accuracy: user.totalProblems > 0 ? (user.correctSolved / user.totalProblems) * 100 : 0,
+      problemsSolved: user.totalProblems,
+      weeklyPoints: user.weeklyPoints,
+      trend: "same", // We'd need historical data to calculate this
+      division: user.division
+    }))
+    
     return NextResponse.json({
       success: true,
       leaderboard,
@@ -72,44 +164,45 @@ export async function GET(request: NextRequest) {
 // POST /api/league - Update user points
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { userId = '5', pointsEarned, isCorrect, problemDifficulty } = body
+    const session = await getServerSession(authOptions)
     
-    // Find user in leaderboard
-    const userIndex = leaderboard.findIndex(player => player.id === userId)
-    
-    if (userIndex === -1) {
+    if (!session?.user?.id) {
       return NextResponse.json({
         success: false,
-        error: 'User not found'
-      }, { status: 404 })
+        error: 'Not authenticated'
+      }, { status: 401 })
     }
     
-    const user = leaderboard[userIndex]
+    const body = await request.json()
+    const { pointsEarned, isCorrect, problemDifficulty } = body
     
-    // Update user stats
-    const updatedUser = {
-      ...user,
-      points: user.points + pointsEarned,
-      problemsSolved: user.problemsSolved + 1,
-      weeklyPoints: user.weeklyPoints + pointsEarned,
-      streak: isCorrect ? user.streak + 1 : 0,
-      accuracy: ((user.accuracy * (user.problemsSolved - 1)) + (isCorrect ? 1 : 0)) / user.problemsSolved
-    }
-    
-    // Update in leaderboard
-    leaderboard[userIndex] = updatedUser
-    
-    // Recalculate rankings
-    leaderboard.sort((a, b) => b.points - a.points)
-    leaderboard.forEach((player, index) => {
-      player.rank = index + 1
+    // Update user data via the user API
+    const userResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/user`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pointsEarned,
+        problemsSolved: 1,
+        correctAnswers: isCorrect ? 1 : 0,
+        newStreak: isCorrect ? undefined : 0, // Only reset streak if incorrect
+        sessionData: {
+          mode: 'league',
+          pointsEarned,
+          difficulty: problemDifficulty
+        }
+      })
     })
+    
+    if (!userResponse.ok) {
+      throw new Error('Failed to update user data')
+    }
+    
+    const userData = await userResponse.json()
     
     return NextResponse.json({
       success: true,
-      user: updatedUser,
-      newRank: updatedUser.rank,
+      user: userData.user,
+      changes: userData.changes,
       pointsEarned
     })
     

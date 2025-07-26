@@ -2,6 +2,7 @@ import { Press_Start_2P } from "next/font/google"
 import "./globals.css"
 import type React from "react"
 import "katex/dist/katex.min.css"
+import { AuthProvider } from "@/components/auth-provider"
 
 const pixelFont = Press_Start_2P({
   weight: "400",
@@ -16,7 +17,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={pixelFont.className}>{children}</body>
+      <body className={pixelFont.className}>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   )
 }

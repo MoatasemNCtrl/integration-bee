@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  
+  // Game-specific fields
+  leaguePoints  Int       @default(0)
+  totalProblems Int       @default(0)
+  correctSolved Int       @default(0)
+  currentStreak Int       @default(0)
+  longestStreak Int       @default(0)
+  division      String    @default("League Two")
+  weeklyPoints  Int       @default(0)
+  joinedAt      DateTime  @default(now())
+  lastActive    DateTime  @default(now())
+  
+  // Game sessions
+  gameSessions  GameSession[]
+  achievements  UserAchievement[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model GameSession {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mode             String   // "rush", "1v1", "tournament", "league", "practice"
+  problemsSolved   Int      @default(0)
+  correctAnswers   Int      @default(0)
+  pointsEarned     Int      @default(0)
+  timeSpent        Int      @default(0) // in seconds
+  accuracy         Float    @default(0)
+  maxStreak        Int      @default(0)
+  difficulty       String   @default("Basic")
+  createdAt        DateTime @default(now())
+  completedAt      DateTime?
+}
+
+model Achievement {
+  id          String @id @default(cuid())
+  key         String @unique // e.g., "first_solve", "streak_10"
+  name        String
+  description String
+  icon        String
+  category    String // e.g., "progress", "streak", "speed"
+  requirement Int?   // For numeric achievements
+  
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  earnedAt      DateTime    @default(now())
+  progress      Int?        // For tracking progress towards achievement
+  
+  @@unique([userId, achievementId])
+}
+
+model Leaderboard {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  globalRank   Int      @default(0)
+  weeklyRank   Int      @default(0)
+  monthlyRank  Int      @default(0)
+  lastUpdated  DateTime @default(now())
+}
