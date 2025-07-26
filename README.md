@@ -21,7 +21,12 @@ A web application that turns integration problems into an engaging game, similar
 - **📚 Practice Mode**: Study problems at your own pace with solutions
 - **🔥 Streak System**: Build up solving streaks for extra motivation
 
-### 🏆 League System (Fantasy Premier League Style)
+### 🔐 Authentication & User Accounts
+- **Google OAuth Sign-In**: Secure authentication with Google accounts
+- **Persistent Progress**: All game data is saved to your account
+- **Cross-Device Sync**: Access your progress from any device
+- **User Profiles**: Detailed statistics and achievement tracking
+- **Privacy-First**: Only basic profile information is stored
 - **📈 Global Leaderboard**: Compete with players worldwide
 - **🏅 Division System**: Premier, Championship, League One, League Two
 - **⭐ Point Scoring**: Earn points based on problem difficulty and accuracy
@@ -58,9 +63,26 @@ A web application that turns integration problems into an engaging game, similar
    cp .env.example .env.local
    ```
    
-   Edit `.env.local` and add your OpenAI API key:
+   Edit `.env.local` and add your API keys:
    ```env
    OPENAI_API_KEY=your_openai_api_key_here
+   GOOGLE_CLIENT_ID=your_google_client_id_here
+   GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+   NEXTAUTH_URL=http://localhost:3002
+   NEXTAUTH_SECRET=your_secure_random_string_here
+   ```
+
+4. **Set up Google OAuth (Required for user accounts)**
+   
+   Follow the detailed instructions in [GOOGLE_OAUTH_SETUP.md](./GOOGLE_OAUTH_SETUP.md) to:
+   - Create a Google Cloud project
+   - Set up OAuth 2.0 credentials
+   - Configure authorized redirect URIs
+
+5. **Initialize the database**
+   ```bash
+   npx prisma generate
+   npx prisma migrate dev
    ```
 
 4. **Run the development server**
@@ -71,7 +93,7 @@ A web application that turns integration problems into an engaging game, similar
    ```
 
 5. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+   Navigate to [http://localhost:3002](http://localhost:3002)
 
 ## 🎯 How to Play
 
