@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Account {
@@ -60,6 +61,10 @@ model User {
   // Game sessions
   gameSessions  GameSession[]
   achievements  UserAchievement[]
+  
+  // Tournament relations
+  hostedTournaments    TournamentRoom[]        @relation("TournamentHost")
+  tournamentParticipations TournamentParticipant[] @relation("TournamentParticipant")
 }
 
 model VerificationToken {
@@ -117,4 +122,69 @@ model Leaderboard {
   weeklyRank   Int      @default(0)
   monthlyRank  Int      @default(0)
   lastUpdated  DateTime @default(now())
+}
+
+model TournamentRoom {
+  id          String   @id @default(cuid())
+  code        String   @unique // 6-digit code
+  hostId      String
+  host        User     @relation("TournamentHost", fields: [hostId], references: [id], onDelete: Cascade)
+  status      TournamentStatus @default(WAITING)
+  maxPlayers  Int      @default(8)
+  createdAt   DateTime @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  
+  participants TournamentParticipant[]
+  matches      TournamentMatch[]
+}
+
+model TournamentParticipant {
+  id         String         @id @default(cuid())
+  roomId     String
+  room       TournamentRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User           @relation("TournamentParticipant", fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt   DateTime       @default(now())
+  score      Int            @default(0)
+  wins       Int            @default(0)
+  losses     Int            @default(0)
+  rank       Int?
+  
+  playerMatches  TournamentMatch[] @relation("Player1Matches")
+  opponentMatches TournamentMatch[] @relation("Player2Matches")
+  
+  @@unique([roomId, userId])
+}
+
+model TournamentMatch {
+  id        String         @id @default(cuid())
+  roomId    String
+  room      TournamentRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  player1Id String
+  player1   TournamentParticipant @relation("Player1Matches", fields: [player1Id], references: [id], onDelete: Cascade)
+  player2Id String
+  player2   TournamentParticipant @relation("Player2Matches", fields: [player2Id], references: [id], onDelete: Cascade)
+  
+  status      MatchStatus @default(PENDING)
+  startedAt   DateTime?
+  completedAt DateTime?
+  winnerId    String?
+  player1Score Int @default(0)
+  player2Score Int @default(0)
+  
+  round       Int // Round number in round-robin
+}
+
+enum TournamentStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum MatchStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
 }

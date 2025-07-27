@@ -2,273 +2,356 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-
-interface Player {
-  id: string
-  name: string
-  score: number
-  isHost: boolean
-}
+import { useSession } from "next-auth/react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Loader2, Users, Crown, LogIn, Play, Hash } from "lucide-react"
 
 export default function RoundRobinPage() {
   const router = useRouter()
-  const [gameCode, setGameCode] = useState("")
-  const [playerName, setPlayerName] = useState("")
-  const [isHost, setIsHost] = useState(false)
-  const [players, setPlayers] = useState<Player[]>([])
-  const [gameSettings, setGameSettings] = useState({
-    questionsPerRound: 10,
-    timePerQuestion: 30,
-    totalRounds: 3,
-    difficulty: "Mixed" as "Basic" | "Intermediate" | "Advanced" | "Mixed"
-  })
+  const { data: session } = useSession()
+  const [joinCode, setJoinCode] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  // Generate random game code
-  const generateGameCode = () => {
-    return Math.random().toString(36).substring(2, 8).toUpperCase()
-  }
-
-  const createGame = () => {
-    const code = generateGameCode()
-    setGameCode(code)
-    setIsHost(true)
-    const hostPlayer: Player = {
-      id: "host",
-      name: playerName || "Host",
-      score: 0,
-      isHost: true
+  const createTournament = async () => {
+    if (!session?.user) {
+      router.push('/auth/signin')
+      return
     }
-    setPlayers([hostPlayer])
-  }
 
-  const joinGame = () => {
-    if (gameCode && playerName) {
-      // In a real implementation, this would connect to a server
-      const newPlayer: Player = {
-        id: Math.random().toString(36).substring(2, 9),
-        name: playerName,
-        score: 0,
-        isHost: false
+    setLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch('/api/tournament/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          maxPlayers: 8 // Default to 8 players for round-robin
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create tournament')
       }
-      setPlayers(prev => [...prev, newPlayer])
+
+      // Redirect to host page
+      router.push(data.hostUrl)
+      
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to create tournament')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const startTournament = () => {
-    if (players.length >= 2) {
-      // Store game data in sessionStorage for the game component
-      sessionStorage.setItem('tournament-type', 'round-robin')
-      sessionStorage.setItem('game-code', gameCode)
-      sessionStorage.setItem('players', JSON.stringify(players))
-      sessionStorage.setItem('game-settings', JSON.stringify(gameSettings))
-      router.push('/tournament/game/round-robin')
+  const joinTournament = async () => {
+    if (!session?.user) {
+      router.push('/auth/signin')
+      return
     }
+
+    if (!joinCode.trim()) {
+      setError('Please enter a tournament code')
+      return
+    }
+
+    // Validate 6-digit code format
+    if (!/^\d{6}$/.test(joinCode.trim())) {
+      setError('Tournament code must be 6 digits')
+      return
+    }
+
+    setLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch('/api/tournament/join', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: joinCode.trim()
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to join tournament')
+      }
+
+      // Redirect to player page
+      router.push(`/player/${joinCode.trim()}`)
+      
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to join tournament')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!session?.user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-black/20 border-purple-500/30">
+          <CardContent className="p-6 text-center">
+            <LogIn className="h-12 w-12 mx-auto mb-4 text-purple-400" />
+            <h2 className="text-xl font-bold text-white mb-2">Sign In Required</h2>
+            <p className="text-white/80 mb-4">You need to sign in to participate in tournaments</p>
+            <Button 
+              onClick={() => router.push('/auth/signin')} 
+              className="w-full bg-purple-600 hover:bg-purple-700"
+            >
+              <LogIn className="h-4 w-4 mr-2" />
+              Sign In to Continue
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8 pt-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">🔄 Round Robin Tournament</h1>
-          <p className="text-lg text-gray-600">Kahoot-style integration competition</p>
+        <div className="text-center mb-12 pt-8">
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent mb-4">
+            🔄 Round Robin Tournament
+          </h1>
+          <p className="text-xl text-white/80">Host a tournament or join with a 6-digit code</p>
         </div>
 
-        {!gameCode ? (
-          /* Initial Setup */
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Create Game */}
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">🎯 Create Tournament</h2>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
-                  <input
-                    type="text"
-                    value={playerName}
-                    onChange={(e) => setPlayerName(e.target.value)}
-                    placeholder="Enter your name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                </div>
+        {error && (
+          <Alert className="mb-6 bg-red-500/20 border-red-500/30 max-w-2xl mx-auto">
+            <AlertDescription className="text-red-200">
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
 
-                <button
-                  onClick={createGame}
-                  disabled={!playerName.trim()}
-                  className="w-full px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:bg-gray-300 font-medium transition-all shadow-md"
-                >
-                  🚀 Create Tournament
-                </button>
+        <div className="grid lg:grid-cols-2 gap-8 mb-8">
+          {/* Host Tournament - Left Side */}
+          <Card className="bg-black/20 border-yellow-500/30">
+            <CardHeader className="text-center">
+              <CardTitle className="text-white flex items-center justify-center gap-2 text-2xl">
+                <Crown className="h-6 w-6 text-yellow-400" />
+                Host Tournament
+              </CardTitle>
+              <CardDescription className="text-white/60 text-lg">
+                Create a new round-robin tournament and get a 6-digit code
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                <h3 className="text-white font-bold mb-3 flex items-center gap-2">
+                  <Play className="h-4 w-4" />
+                  How it works:
+                </h3>
+                <div className="space-y-2 text-sm text-white/80">
+                  <div className="flex items-start gap-2">
+                    <span className="text-yellow-400 font-bold">1.</span>
+                    <span>Click "Host Tournament" to create a room</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-yellow-400 font-bold">2.</span>
+                    <span>Get a unique 6-digit code (e.g., 823519)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-yellow-400 font-bold">3.</span>
+                    <span>Share the code with players</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-yellow-400 font-bold">4.</span>
+                    <span>Start when ready (minimum 2 players)</span>
+                  </div>
+                </div>
               </div>
 
-              {/* Join Game */}
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-4">🎮 Join Tournament</h2>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
-                  <input
-                    type="text"
-                    value={playerName}
-                    onChange={(e) => setPlayerName(e.target.value)}
-                    placeholder="Enter your name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
+              <div className="space-y-3 text-sm text-white/80">
+                <div className="flex items-center gap-2">
+                  <span className="text-green-400">✓</span>
+                  <span>Support up to 8 players</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-green-400">✓</span>
+                  <span>Full tournament control</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-green-400">✓</span>
+                  <span>Real-time player management</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-green-400">✓</span>
+                  <span>Automatic round-robin scheduling</span>
+                </div>
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Game Code</label>
-                  <input
+              <Button 
+                onClick={createTournament}
+                disabled={loading}
+                className="w-full bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-4 text-lg"
+                size="lg"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Creating Tournament...
+                  </>
+                ) : (
+                  <>
+                    <Crown className="h-5 w-5 mr-2" />
+                    Host New Tournament
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Join Tournament - Right Side */}
+          <Card className="bg-black/20 border-blue-500/30">
+            <CardHeader className="text-center">
+              <CardTitle className="text-white flex items-center justify-center gap-2 text-2xl">
+                <Hash className="h-6 w-6 text-blue-400" />
+                Join Tournament
+              </CardTitle>
+              <CardDescription className="text-white/60 text-lg">
+                Enter a 6-digit code to join an existing tournament
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                <h3 className="text-white font-bold mb-3 flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  How to join:
+                </h3>
+                <div className="space-y-2 text-sm text-white/80">
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-400 font-bold">1.</span>
+                    <span>Get the 6-digit code from the host</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-400 font-bold">2.</span>
+                    <span>Enter the code in the field below</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-400 font-bold">3.</span>
+                    <span>Click "Join Tournament"</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-400 font-bold">4.</span>
+                    <span>Wait in the lobby for the host to start</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="joinCode" className="text-white font-bold">Tournament Code</Label>
+                  <Input
+                    id="joinCode"
                     type="text"
-                    value={gameCode}
-                    onChange={(e) => setGameCode(e.target.value.toUpperCase())}
-                    placeholder="Enter game code"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-center text-lg"
+                    placeholder="000000"
+                    value={joinCode}
+                    onChange={(e) => {
+                      // Only allow numbers, max 6 digits
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 6)
+                      setJoinCode(value)
+                    }}
+                    className="bg-white/10 border-blue-500/30 text-white placeholder-white/30 text-center text-3xl font-mono tracking-[0.5em] py-6"
                     maxLength={6}
                   />
+                  <p className="text-white/60 text-sm text-center">
+                    Enter the 6-digit code shared by the tournament host
+                  </p>
                 </div>
 
-                <button
-                  onClick={joinGame}
-                  disabled={!playerName.trim() || !gameCode.trim()}
-                  className="w-full px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 font-medium transition-all shadow-md"
-                >
-                  🎯 Join Tournament
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Game Lobby */
-          <div className="space-y-8">
-            {/* Game Info */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="text-center mb-6">
-                <h2 className="text-3xl font-bold text-gray-800 mb-2">Tournament Lobby</h2>
-                <div className="text-2xl font-mono bg-purple-100 text-purple-800 px-6 py-3 rounded-lg inline-block">
-                  Game Code: {gameCode}
-                </div>
-              </div>
-
-              {isHost && (
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-6 mb-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4">🛠️ Tournament Settings</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Questions per Round</label>
-                      <select
-                        value={gameSettings.questionsPerRound}
-                        onChange={(e) => setGameSettings(prev => ({...prev, questionsPerRound: parseInt(e.target.value)}))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                      >
-                        <option value={5}>5 Questions</option>
-                        <option value={10}>10 Questions</option>
-                        <option value={15}>15 Questions</option>
-                        <option value={20}>20 Questions</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Time per Question</label>
-                      <select
-                        value={gameSettings.timePerQuestion}
-                        onChange={(e) => setGameSettings(prev => ({...prev, timePerQuestion: parseInt(e.target.value)}))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                      >
-                        <option value={15}>15 seconds</option>
-                        <option value={30}>30 seconds</option>
-                        <option value={45}>45 seconds</option>
-                        <option value={60}>60 seconds</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Total Rounds</label>
-                      <select
-                        value={gameSettings.totalRounds}
-                        onChange={(e) => setGameSettings(prev => ({...prev, totalRounds: parseInt(e.target.value)}))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                      >
-                        <option value={1}>1 Round</option>
-                        <option value={3}>3 Rounds</option>
-                        <option value={5}>5 Rounds</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
-                      <select
-                        value={gameSettings.difficulty}
-                        onChange={(e) => setGameSettings(prev => ({...prev, difficulty: e.target.value as any}))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
-                      >
-                        <option value="Basic">Basic</option>
-                        <option value="Intermediate">Intermediate</option>
-                        <option value="Advanced">Advanced</option>
-                        <option value="Mixed">Mixed</option>
-                      </select>
-                    </div>
+                <div className="space-y-3 text-sm text-white/80">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span>Instant tournament access</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span>Real-time lobby updates</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">✓</span>
+                    <span>Compete for the top spot</span>
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* Players List */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">
-                👥 Players ({players.length}/20)
-              </h3>
-              
-              <div className="grid gap-3">
-                {players.map((player, index) => (
-                  <div key={player.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-purple-500 text-white rounded-full flex items-center justify-center font-bold">
-                        {index + 1}
-                      </div>
-                      <span className="font-medium text-gray-800">{player.name}</span>
-                      {player.isHost && (
-                        <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">
-                          👑 Host
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-sm text-gray-500">Ready</div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 text-center text-gray-500">
-                Share the game code <strong>{gameCode}</strong> with others to join!
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-4 justify-center">
-              <button
-                onClick={() => router.push("/tournament")}
-                className="px-8 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 font-medium transition-all shadow-md"
-              >
-                ← Back
-              </button>
-              
-              {isHost && (
-                <button
-                  onClick={startTournament}
-                  disabled={players.length < 2}
-                  className={`
-                    px-12 py-3 rounded-xl font-bold text-lg transition-all shadow-md
-                    ${
-                      players.length >= 2
-                        ? "bg-purple-500 hover:bg-purple-600 text-white hover:scale-105"
-                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    }
-                  `}
+                <Button 
+                  onClick={joinTournament}
+                  disabled={loading || joinCode.length !== 6}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 text-lg"
+                  size="lg"
                 >
-                  🚀 Start Tournament
-                </button>
-              )}
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Joining Tournament...
+                    </>
+                  ) : (
+                    <>
+                      <Users className="h-5 w-5 mr-2" />
+                      Join Tournament
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* How Round Robin Works */}
+        <Card className="bg-black/20 border-purple-500/30 mb-8">
+          <CardHeader>
+            <CardTitle className="text-white text-center text-2xl">How Round Robin Tournaments Work</CardTitle>
+            <CardDescription className="text-white/60 text-center text-lg">
+              Everyone plays simultaneously in a Kahoot-style format
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-3 gap-8 text-center">
+              <div className="space-y-3">
+                <div className="text-5xl">🎯</div>
+                <h3 className="text-white font-bold text-lg">Same Questions</h3>
+                <p className="text-white/70">All players answer identical integration problems simultaneously</p>
+              </div>
+              <div className="space-y-3">
+                <div className="text-5xl">⚡</div>
+                <h3 className="text-white font-bold text-lg">Speed Matters</h3>
+                <p className="text-white/70">Points awarded based on both accuracy and how quickly you answer</p>
+              </div>
+              <div className="space-y-3">
+                <div className="text-5xl">🏆</div>
+                <h3 className="text-white font-bold text-lg">Live Rankings</h3>
+                <p className="text-white/70">Real-time leaderboard shows who's leading throughout the tournament</p>
+              </div>
             </div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
+
+        <div className="text-center">
+          <Button 
+            onClick={() => router.push('/tournament')} 
+            variant="outline"
+            className="border-white/30 text-white hover:bg-white/10"
+          >
+            ← Back to Tournament Selection
+          </Button>
+        </div>
       </div>
     </div>
   )

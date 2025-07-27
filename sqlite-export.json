@@ -1,0 +1,49 @@
+{
+  "users": [
+    {
+      "id": "cmdkkdnqp00000k6w5hus8npk",
+      "name": "Moatasem Nada",
+      "email": "alkhalifa.moatasem@gmail.com",
+      "emailVerified": null,
+      "image": "https://lh3.googleusercontent.com/a/ACg8ocJ1QO73y4qutnMeM1-rPrdFpzm5RNyeMIu5RYGWQRdEK725vnsJ=s96-c",
+      "leaguePoints": 0,
+      "totalProblems": 0,
+      "correctSolved": 0,
+      "currentStreak": 0,
+      "longestStreak": 0,
+      "division": "League Two",
+      "weeklyPoints": 0,
+      "joinedAt": "2025-07-26T18:08:53.617Z",
+      "lastActive": "2025-07-26T18:08:53.617Z",
+      "accounts": [
+        {
+          "id": "cmdkkdnqu00020k6wvrp2myuy",
+          "userId": "cmdkkdnqp00000k6w5hus8npk",
+          "type": "oauth",
+          "provider": "google",
+          "providerAccountId": "105852771740645867523",
+          "refresh_token": null,
+          "access_token": "ya29.a0AS3H6NyStzoDq_V9N6ThecteB3Qqhw0-MizZhSICyQezNL7qP9Yp4A_FmDJVMHc9DGMphRutN1yFp1i-xYxMdzK43tieASU3hfbWcxaFWR9YPaYiJbfgnmTE16rkjt2_Ik4XLFCf9ZLNkYMmQOU7H60R1Lm8TClkT9Oud2ZuaCgYKAesSARcSFQHGX2MiclRuG7Ux6TVlPwDstTjaZg0175",
+          "expires_at": 1753556932,
+          "token_type": "Bearer",
+          "scope": "openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile",
+          "id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImI1MDljNTEzODc2OGY3Y2YyZTgyN2UwNGIyN2U3ZTRjYmM3YmI5MTkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI3MjYxNDY3OTkzOTEtMWJob2RiYW5xbjd2ZTZkdjljZmVvdm1pYmlvYnA2MWkuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI3MjYxNDY3OTkzOTEtMWJob2RiYW5xbjd2ZTZkdjljZmVvdm1pYmlvYnA2MWkuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDU4NTI3NzE3NDA2NDU4Njc1MjMiLCJlbWFpbCI6ImFsa2hhbGlmYS5tb2F0YXNlbUBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6IlY0VDZEc05LQWdVNUtMQk9tQkc5RWciLCJuYW1lIjoiTW9hdGFzZW0gTmFkYSIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NKMVFPNzN5NHF1dG5NZU0xLXJQcmRGcHptNVJOeWVNSXU1UllHV1FSZEVLNzI1dm5zSj1zOTYtYyIsImdpdmVuX25hbWUiOiJNb2F0YXNlbSBOYWRhIiwiaWF0IjoxNzUzNTUzMzMzLCJleHAiOjE3NTM1NTY5MzN9.RWTa3xE5WfMN3-dUJBWK2-Y8Io5-0Xhg9UhTeKyaKwSSk0HLGau6FfbepY2ErOxdVz8FwNre08m14Q03cDA-vmqEqWv1edwVra1TogvQuJPKqfJ3VJq6TYm5Arm2KVfHpJ5E00uu66N-6-ii-jS4tCuXWZwBw6XcMmDgknPk_EmfxDEQTPQ9rwE3TIFC1IQ_e16RUcH99K4AA7PojsAwRWWnF-jd07sExeIr7rNopZoZXjLG-vy9BVYVcD0-lzVyaA90E30gf0Yts0cgBYY_UtlXVeHNl86pSehWkZxWZueHujP_LKT-kIdr3B2PeH_jc0T-dwEqEstHl2pnGOKSOg",
+          "session_state": null
+        }
+      ],
+      "sessions": [
+        {
+          "id": "cmdkkdnqx00040k6wtz456i4z",
+          "sessionToken": "8333ac05-dfff-437d-82f6-904d39c16440",
+          "userId": "cmdkkdnqp00000k6w5hus8npk",
+          "expires": "2025-08-25T18:08:53.624Z"
+        }
+      ]
+    }
+  ],
+  "achievements": [],
+  "userAchievements": [],
+  "gameSessions": [],
+  "leaderboards": [],
+  "exportedAt": "2025-07-26T19:10:21.411Z"
+}

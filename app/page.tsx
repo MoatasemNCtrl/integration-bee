@@ -37,7 +37,6 @@ export default function StartPage() {
           <div className="flex flex-col items-center gap-6">
             {/* Main Game Modes */}
             <div className="grid grid-cols-2 gap-6 p-6">
-              {/* Tournament Button with hover effect */}
               <button
                 onClick={() => router.push("/tournament")}
                 className="w-48 h-48 bg-white/90 rounded-xl shadow-lg hover:scale-105 transition-transform duration-300 relative group overflow-hidden"
