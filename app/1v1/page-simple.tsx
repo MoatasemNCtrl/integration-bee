@@ -1,11 +1,14 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
 export default function OneVOnePage() {
   const router = useRouter()
+  const { data: session } = useSession()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-900 via-orange-900 to-yellow-900 p-4">

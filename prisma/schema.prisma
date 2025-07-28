@@ -65,6 +65,12 @@ model User {
   // Tournament relations
   hostedTournaments    TournamentRoom[]        @relation("TournamentHost")
   tournamentParticipations TournamentParticipant[] @relation("TournamentParticipant")
+  
+  // 1v1 Duel relations
+  hostedDuels     DuelRoom[] @relation("DuelHost")
+  opponentDuels   DuelRoom[] @relation("DuelOpponent")
+  wonDuels        DuelRoom[] @relation("DuelWinner")
+  duelQueue       DuelQueue?
 }
 
 model VerificationToken {
@@ -187,4 +193,56 @@ enum MatchStatus {
   PENDING
   IN_PROGRESS
   COMPLETED
+}
+
+// 1v1 Duel System
+model DuelRoom {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  status      DuelStatus @default(WAITING)
+  timeControl Int      @default(180) // seconds (3 minutes default)
+  difficulty  String   @default("Mixed")
+  questionsToWin Int   @default(5)
+  
+  hostId      String
+  host        User     @relation("DuelHost", fields: [hostId], references: [id], onDelete: Cascade)
+  
+  opponentId  String?
+  opponent    User?    @relation("DuelOpponent", fields: [opponentId], references: [id], onDelete: Cascade)
+  
+  winnerId    String?
+  winner      User?    @relation("DuelWinner", fields: [winnerId], references: [id], onDelete: Cascade)
+  
+  currentQuestionId String?
+  hostScore    Int     @default(0)
+  opponentScore Int    @default(0)
+  hostTimeRemaining Int?
+  opponentTimeRemaining Int?
+  
+  createdAt   DateTime @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+  
+  // Game state for real-time updates
+  gameState   Json?
+  
+  @@map("duel_rooms")
+}
+
+model DuelQueue {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timeControl Int      @default(180)
+  difficulty  String   @default("Mixed")
+  createdAt   DateTime @default(now())
+  
+  @@map("duel_queue")
+}
+
+enum DuelStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
 }
